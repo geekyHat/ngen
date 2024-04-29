@@ -1,0 +1,128 @@
+#!/bin/bash
+note_destination=`cat notes_path.txt`  # you need to change this with the path to your obsidian
+# Sets the path to the "template" directory
+template_dir="templates"
+
+# reference to the name of the machine
+machine_name=$1    
+
+# add some color
+YELLOW="\033[01;33m" 
+RED="\033[01;31m" 
+GREEN="\033[01;32m"    
+BLUE="\033[01;34m"
+PINK="\033[01;95m"
+RESET="\033[00m"
+
+yellow(){
+	local msg="$1"
+	echo -e "${YELLOW} ${msg} ${RESET}"
+}
+blue(){
+	local msg="$1"
+	echo -e "${BLUE} ${msg} ${RESET}"
+}
+red(){
+	local msg="$1"
+	echo -e "${RED} ${msg} ${RESET}"
+}
+green(){
+	local msg="$1"
+	echo -e "${GREEN} ${msg} ${RESET}"
+}
+
+
+
+
+# a bit of vanity menu
+geeky_banner(){
+red "       ______          __         _   __      __    "
+red "      / ____/__  ___  / /____  __/ | / /_  __/ /_  "
+yellow "     / / __/ _ \/ _ \/ //_/ / / /  |/ / / / / __/   "
+yellow "    / /_/ /  __/  __/ ,< / /_/ / /|  / /_/ / /_     "
+green "    \____/\___/\___/_/|_|\__, /_/ |_/\__,_/\__/     "
+green "                        /____/                       \n\n\n"	
+
+}
+
+
+# Function to display the menu
+display_menu() {
+    yellow "Choose a directory:"
+    local count=1
+    for dir in "$template_dir"/*/; do
+        green "$count) $(basename "$dir")"
+        choices+=("$(basename "$dir")")  # Add directory name to choices array
+        ((count++))
+    done
+
+	echo -e "\n"
+}
+
+
+
+#welcome with GeekyHat banner
+geeky_banner
+
+#validate the machine name
+if [ $# -eq 0 ]
+then
+     red "Error: please provide a name for the machine\n\n "
+    
+     yellow "Example: ~ ./ngen name_of_my_machine\n "
+     exit 1
+else
+	blue "Please select the template you wish to use for ${machine_name}"
+	echo -e "\n" 
+fi
+
+# Function to prompt user for choice
+prompt_choice() {
+    local choice
+    read -p "choose the template to copy: " choice
+    echo "$choice"
+}
+
+# Function to validate the choice
+validate_choice() {
+    local choice="$1"
+    if [[ $choice =~ ^[1-9][0-9]*$ && $choice -le ${#choices[@]} ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Main script
+main() {
+    # Check if the "template" directory exists
+    if [ ! -d "$template_dir" ]; then
+        echo "Error: 'templates' directory not found."
+        exit 1
+    fi
+   
+    # Initialize choices array
+    choices=()
+
+    # Display the menu and populate choices array
+    display_menu
+    
+    # Prompt user for choice
+    choice=$(prompt_choice)
+    
+    # Validate the choice
+    if ! validate_choice "$choice"; then
+        echo "Invalid template choice. Please choose a number from 1 to ${#choices[@]}."
+        exit 1
+    fi
+    
+    # capture chosen template
+    chosen_template="${choices[$(($choice - 1))]}"
+    
+    # copy the chosen template structure
+    cp -r "$template_dir/$chosen_template" "$note_destination/$machine_name"
+    green "Setup completed for $note_destination/$machine_name"
+}
+
+# Run the main function
+main 
